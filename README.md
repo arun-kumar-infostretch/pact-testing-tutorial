@@ -30,17 +30,23 @@ The broker will be available at [http://localhost:9292](http://localhost:9292).
 
 ```bash
 cd product-web-app
-npm install
 npm test
+npm run pact:publish
 ```
+//launch the broker 
+ [http://localhost:9292](http://localhost:9292).
 
+ //check the status of the consumer it is present or not
 ### 3. Run the Provider Tests
 
 ```bash
 cd product-api
-npm install
 npm test
 ```
+//launch the broker 
+ [http://localhost:9292](http://localhost:9292).
+
+ //check the status of the provider it is present or not
 
 ## Pact Broker
 

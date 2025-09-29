@@ -1,0 +1,37 @@
+name: Pact CI Workflow
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  contract-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker-compose up --build -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for Pact Broker..."
+          while ! nc -z localhost 9292; do sleep 1; done
+          echo "Pact Broker is up."
+          echo "Waiting for Product API..."
+          while ! nc -z localhost 8081; do sleep 1; done
+          echo "Product API is up."
+
+      - name: Run Consumer Tests and Publish Pact
+        working-directory: ./product-web-app
+        run: npm test
+        env:
+          PACT_BROKER_URL: http://localhost:9292
+
+      - name: Run Provider Verification
+        working-directory: ./product-api
+        run: npm test
+        env:
+          PACT_BROKER_URL: http://localhost:9292
+          API_BASE_URL: http://localhost:8081

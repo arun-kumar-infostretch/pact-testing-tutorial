@@ -22,7 +22,7 @@ This project uses a Pact Broker to manage contracts and verification results.
 ### 1. Start the Pact Broker
 
 ```bash
-docker run --rm -p 9292:9292 pactfoundation/pact-broker
+docker run --rm -p 9292:9292 -e PACT_BROKER_DATABASE_ADAPTER=sqlite pactfoundation/pact-broker
 ```
 The broker will be available at [http://localhost:9292](http://localhost:9292).
 

@@ -62,7 +62,7 @@ jobs:
       # ---------- DEPLOY CHECK ----------
       - name: Pact Can I Deploy Check
         run: |
-          npx @pact-foundation/pact-cli can-i-deploy \
+          npx @pact-foundation/pact-cli pact-broker can-i-deploy \
             --pacticipant ProductWebApp \
             --version ${{ github.sha }} \
             --to-environment production \

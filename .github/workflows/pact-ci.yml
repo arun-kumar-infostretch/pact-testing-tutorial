@@ -69,15 +69,7 @@ jobs:
       # This step ensures provider verification results are published (if your test doesn't auto-publish)
       - name: Install Pact CLI globally (for reliability)
         run: npm install -g @pact-foundation/pact-cli  
-        
-      - name: Publish Provider Verification Results (optional backup)
-        run: |
-          npx pact-broker publish-verification-results \
-            --provider ProductAPI \
-            --provider-version ${{ github.sha }} \
-            --success true \
-            --broker-base-url http://localhost:9292
-        continue-on-error: true
+
 
       # ======================================================
       # ================ RECORD DEPLOYMENT ===================

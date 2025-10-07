@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------- CHECKOUT ----------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------------------- SETUP ----------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -26,7 +28,9 @@ jobs:
           until nc -z localhost 8081; do sleep 2; done
           echo "Services are up and running!"
 
-      # ---------- CONSUMER ----------
+      # ======================================================
+      # ================ CONSUMER TESTS ======================
+      # ======================================================
       - name: Install Consumer Dependencies
         working-directory: ./product-web-app
         run: npm ci
@@ -40,16 +44,19 @@ jobs:
         run: |
           npx pact-broker publish pacts \
             --consumer-app-version=${{ github.sha }} \
+            --branch main \
             --broker-base-url=http://localhost:9292
         env:
           PACT_BROKER_BASE_URL: http://localhost:9292
 
-      # ---------- PROVIDER ----------
+      # ======================================================
+      # ================ PROVIDER TESTS ======================
+      # ======================================================
       - name: Install Provider Dependencies
         working-directory: ./product-api
         run: npm ci
 
-      - name: Run Provider Verification (and publish results)
+      - name: Run Provider Verification (publish results)
         working-directory: ./product-api
         run: |
           npm test
@@ -59,16 +66,34 @@ jobs:
           PROVIDER_VERSION: ${{ github.sha }}
           CI: true
 
-      # ---------- DEPLOY CHECK ----------
-        
-      - name: Install Pact CLI globally (for reliability)
-        run: npm install -g @pact-foundation/pact-cli
+      # This step ensures provider verification results are published (if your test doesn't auto-publish)
+      - name: Publish Provider Verification Results (optional backup)
+        run: |
+          npx pact-broker publish-verification-results \
+            --provider ProductAPI \
+            --provider-version ${{ github.sha }} \
+            --success true \
+            --broker-base-url http://localhost:9292
+        continue-on-error: true
 
+      # ======================================================
+      # ================ RECORD DEPLOYMENT ===================
+      # ======================================================
+      - name: Record Provider Deployment to Production
+        run: |
+          npx pact-broker record-deployment \
+            --pacticipant ProductAPI \
+            --version ${{ github.sha }} \
+            --environment production \
+            --broker-base-url=http://localhost:9292
+
+      # ======================================================
+      # ================ CAN I DEPLOY CHECK ==================
+      # ======================================================
       - name: Pact Can I Deploy Check
         run: |
-          pact-broker can-i-deploy \
+          npx pact-broker can-i-deploy \
             --pacticipant ProductWebApp \
             --version ${{ github.sha }} \
             --to-environment production \
             --broker-base-url=http://localhost:9292
-

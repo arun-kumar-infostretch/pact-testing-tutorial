@@ -19,7 +19,7 @@ jobs:
 
       - name: Start Pact Broker and Provider using Docker Compose
         run: |
-          docker-compose up -d
+          docker compose up -d
           echo "Waiting for Pact Broker..."
           until nc -z localhost 9292; do sleep 2; done
           echo "Waiting for Product API..."

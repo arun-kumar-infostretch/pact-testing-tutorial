@@ -60,10 +60,15 @@ jobs:
           CI: true
 
       # ---------- DEPLOY CHECK ----------
+        
+      - name: Install Pact CLI globally (for reliability)
+        run: npm install -g @pact-foundation/pact-cli
+
       - name: Pact Can I Deploy Check
         run: |
-          npx @pact-foundation/pact-cli pact-broker can-i-deploy \
+          pact-broker can-i-deploy \
             --pacticipant ProductWebApp \
             --version ${{ github.sha }} \
             --to-environment production \
             --broker-base-url=http://localhost:9292
+

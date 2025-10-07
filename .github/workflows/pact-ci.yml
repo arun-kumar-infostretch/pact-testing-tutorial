@@ -38,7 +38,7 @@ jobs:
       - name: Publish Pacts to Broker
         working-directory: ./product-web-app
         run: |
-          npx pact-broker publish ../pacts \
+          npx pact-broker publish pacts \
             --consumer-app-version=${{ github.sha }} \
             --broker-base-url=http://localhost:9292
         env:

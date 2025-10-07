@@ -1,37 +1,68 @@
-name: Pact CI Workflow
+name: Pact Full CI Workflow
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  contract-testing:
+  pact-contract-testing:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start services
-        run: docker-compose up --build -d
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Wait for services to be ready
+      - name: Start Pact Broker and Provider using Docker Compose
         run: |
+          docker-compose up -d
           echo "Waiting for Pact Broker..."
-          while ! nc -z localhost 9292; do sleep 1; done
-          echo "Pact Broker is up."
+          until nc -z localhost 9292; do sleep 2; done
           echo "Waiting for Product API..."
-          while ! nc -z localhost 8081; do sleep 1; done
-          echo "Product API is up."
+          until nc -z localhost 8081; do sleep 2; done
+          echo "Services are up and running!"
 
-      - name: Run Consumer Tests and Publish Pact
+      # ---------- CONSUMER ----------
+      - name: Install Consumer Dependencies
+        working-directory: ./product-web-app
+        run: npm ci
+
+      - name: Run Consumer Pact Tests
         working-directory: ./product-web-app
         run: npm test
-        env:
-          PACT_BROKER_URL: http://localhost:9292
 
-      - name: Run Provider Verification
+      - name: Publish Pacts to Broker
+        working-directory: ./product-web-app
+        run: |
+          npx pact-broker publish ../pacts \
+            --consumer-app-version=${{ github.sha }} \
+            --broker-base-url=http://localhost:9292
+        env:
+          PACT_BROKER_BASE_URL: http://localhost:9292
+
+      # ---------- PROVIDER ----------
+      - name: Install Provider Dependencies
         working-directory: ./product-api
-        run: npm test
+        run: npm ci
+
+      - name: Run Provider Verification (and publish results)
+        working-directory: ./product-api
+        run: |
+          npm test
         env:
           PACT_BROKER_URL: http://localhost:9292
           API_BASE_URL: http://localhost:8081
+          PROVIDER_VERSION: ${{ github.sha }}
+
+      # ---------- DEPLOY CHECK ----------
+      - name: Pact Can I Deploy Check
+        run: |
+          npx pact-broker can-i-deploy \
+            --pacticipant ProductWebApp \
+            --version ${{ github.sha }} \
+            --to-environment production \
+            --broker-base-url=http://localhost:9292

@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "pact:publish": "pact-broker publish pacts --consumer-app-version=1.0.7 --broker-base-url=http://127.0.0.1:9292"
-  },
+  "test": "jest",
+  "pact:publish": "npx pact-broker publish pacts --consumer-app-version=local-dev --broker-base-url=http://localhost:9292"
+}
+,
   "keywords": [],
   "author": "",
   "license": "ISC",
